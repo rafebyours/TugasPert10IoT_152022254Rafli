@@ -1,0 +1,392 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IoT Monitor</title>
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
+    <script src="https://code.iconify.design/3/3.0.0/iconify.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-zoom"></script>
+    <style>
+        body {
+            font-family: 'Poppins', sans-serif;
+            background-color: #f3f4f6;
+            min-height: 100vh;
+            margin: 0;
+            padding: 0;
+        }
+
+        #mainContainer {
+            width: 100%;
+            max-width: 1280px;
+            margin: 0 auto;
+            padding: 16px;
+        }
+
+        .dashboard-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 24px;
+        }
+
+        @media (min-width: 1024px) {
+            .dashboard-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            border-radius: 0.75rem;
+            padding: 1.5rem;
+            width: 100%;
+        }
+
+        .sensor-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+        }
+
+        @media (max-width: 640px) {
+            .sensor-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            padding-bottom: 100px;
+        }
+
+        #chartContainer {
+            width: 100%;
+            height: 100%;
+        }
+
+        #sensorChart {
+            width: 100% !important;
+            height: 100% !important;
+        }
+
+        .sensor-control {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 1rem;
+            justify-content: center;
+            align-items: center;
+        }
+
+        @media (max-width: 640px) {
+            .sensor-control {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+
+        /* New Checkbox Styling */
+        .sensor-control label {
+            display: flex;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+        }
+
+        .sensor-control input[type="checkbox"] {
+            appearance: none;
+            width: 18px;
+            height: 18px;
+            border: 2px solid;
+            border-radius: 4px;
+            outline: none;
+            margin-right: 8px;
+            position: relative;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .sensor-control input[type="checkbox"]:checked {
+            background-color: currentColor;
+        }
+
+        .sensor-control input[type="checkbox"]:checked::after {
+            content: '✔';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            color: white;
+            font-size: 12px;
+        }
+
+        .sensor-control input[type="checkbox"]:focus {
+            box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.1);
+        }
+    </style>
+</head>
+<body>
+    <div id="mainContainer">
+        <div class="dashboard-grid">
+            <!-- Main Monitor -->
+            <div class="card">
+                <!-- Header -->
+                <div class="text-center">
+                    <h1 class="text-2xl font-bold text-gray-800">IoT Monitor</h1>
+                    <p class="text-sm text-gray-500" id="dateDisplay">Fetching...</p>
+                </div>
+
+                <!-- Location Card -->
+                <div class="mt-6 bg-gray-100 p-4 rounded-lg flex items-center space-x-3">
+                    <div class="bg-gray-300 p-3 rounded-full">
+                        <span class="iconify text-gray-600" data-icon="mdi:map-marker" data-width="24" data-height="24"></span>
+                    </div>
+                    <div>
+                        <p class="text-sm text-gray-500">Location</p>
+                        <p class="text-lg font-semibold text-gray-800" id="locationDisplay">Fetching...</p>
+                    </div>
+                </div>
+
+                <!-- Sensor Data -->
+                <div class="sensor-grid mt-6">
+                    <!-- Temperature Card -->
+                    <div class="bg-yellow-100 p-4 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <span class="iconify text-yellow-700" data-icon="mdi:thermometer" data-width="24" data-height="24"></span>
+                            <p class="text-sm text-gray-500">Temperature</p>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-800 mt-2" id="tempDisplay">Fetching...</p>
+                    </div>
+
+                    <!-- Humidity Card -->
+                    <div class="bg-blue-100 p-4 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <span class="iconify text-blue-500" data-icon="mdi:water-percent" data-width="24" data-height="24"></span>
+                            <p class="text-sm text-gray-500">Humidity</p>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-800 mt-2" id="humidityDisplay">Fetching...</p>
+                    </div>
+
+                    <!-- Gas Level Card -->
+                    <div class="bg-green-100 p-4 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <span class="iconify text-green-500" data-icon="mdi:gas-cylinder" data-width="24" data-height="24"></span>
+                            <p class="text-sm text-gray-500">Gas Level</p>
+                        </div>
+                        <p class="text-2xl font-bold text-gray-800 mt-2" id="gasDisplay">Fetching...</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Additional Data (Statistics, History, and Charts) -->
+            <div class="card">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Statistics & History</h2>
+
+                <!-- Statistics -->
+                <div class="mb-6">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Statistics</h3>
+                    <ul class="space-y-2">
+                        <li class="flex justify-between text-gray-600">
+                            <span>Temperature (°C):</span>
+                            <span id="tempStats">Fetching...</span>
+                        </li>
+                        <li class="flex justify-between text-gray-600">
+                            <span>Humidity (%):</span>
+                            <span id="humidityStats">Fetching...</span>
+                        </li>
+                        <li class="flex justify-between text-gray-600">
+                            <span>Gas Level (PPM):</span>
+                            <span id="gasStats">Fetching...</span>
+                        </li>
+                    </ul>
+                </div>
+
+                <!-- Sensor Control Section -->
+                <div class="mt-6 sensor-control">
+                    <label class="flex items-start space-x-2 text-sm text-gray-700">
+                        <input type="checkbox" id="showTemperature" checked class="form-checkbox text-yellow-500" style="border-color: orange;">
+                        <span>Temperature</span>
+                    </label>
+                    <label class="flex items-center space-x-2 text-sm text-gray-700">
+                        <input type="checkbox" id="showHumidity" checked class="form-checkbox text-blue-500" style="border-color: blue;">
+                        <span>Humidity</span>
+                    </label>
+                    <label class="flex items-center space-x-2 text-sm text-gray-700">
+                        <input type="checkbox" id="showGasLevel" checked class="form-checkbox text-green-500" style="border-color: green;">
+                        <span>Gas Level</span>
+                    </label>
+                </div>
+
+                <!-- Chart Section -->
+                <div class="chart-container mt-4">
+                    <h3 class="text-lg font-semibold text-gray-700 mb-2">Charts</h3>
+                    <canvas id="sensorChart"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+async function fetchData() {
+    try {
+        const response = await fetch('/data');
+        const data = await response.json();
+
+        if (data.length === 0) {
+            document.getElementById("mainContainer").innerHTML =
+                '<p class="text-center text-gray-500">No data available.</p>';
+            return;
+        }
+
+        // Sort data based on timestamp (newest first)
+        data.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp));
+
+        // Get the most recent data item
+        const latestItem = data[0];
+        const Data = data.slice(0, 7); // Get the latest 7 data points
+
+        // Update header with current date and time
+        const now = new Date();
+        const formattedDate = now.toLocaleDateString('en-US');
+        const formattedTime = now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById("dateDisplay").textContent = `${formattedDate} ${formattedTime}`;
+
+        // Update location
+        document.getElementById("locationDisplay").textContent = "08-301";
+
+        // Update sensor data on the card
+        document.getElementById("tempDisplay").textContent =
+            latestItem.sensor_value_temp ? `${latestItem.sensor_value_temp}°C` : "N/A";
+        document.getElementById("humidityDisplay").textContent =
+            latestItem.sensor_value_humidity ? `${latestItem.sensor_value_humidity}%` : "N/A";
+        document.getElementById("gasDisplay").textContent =
+            latestItem.sensor_value_gas ? `${latestItem.sensor_value_gas} PPM` : "N/A";
+
+        // Calculate statistics based on the latest data
+        const calculateStats = (values) => ({
+            average: (values.reduce((a, b) => a + b, 0) / values.length).toFixed(2),
+            min: Math.min(...values),
+            max: Math.max(...values),
+        });
+
+        // Extract values for each sensor
+        const tempValues = Data.map(item => item.sensor_value_temp || 0);
+        const humidityValues = Data.map(item => item.sensor_value_humidity || 0);
+        const gasValues = Data.map(item => item.sensor_value_gas || 0);
+
+        // Calculate stats for temperature, humidity, and gas levels
+        const tempStats = calculateStats(tempValues);
+        const humidityStats = calculateStats(humidityValues);
+        const gasStats = calculateStats(gasValues);
+
+        // Update statistics section
+        document.getElementById("tempStats").textContent = `Avg: ${tempStats.average}, Min: ${tempStats.min}, Max: ${tempStats.max}`;
+        document.getElementById("humidityStats").textContent = `Avg: ${humidityStats.average}, Min: ${humidityStats.min}, Max: ${humidityStats.max}`;
+        document.getElementById("gasStats").textContent = `Avg: ${gasStats.average}, Min: ${gasStats.min}, Max: ${gasStats.max}`;
+
+        // Prepare data for chart
+        const timestamps = Data.map(item =>
+            new Date(item.timestamp).toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+        );
+
+        const reversedTimestamps = timestamps.reverse();
+        const reversedTempValues = tempValues.reverse();
+        const reversedHumidityValues = humidityValues.reverse();
+        const reversedGasValues = gasValues.reverse();
+        
+                const ctx = document.getElementById('sensorChart').getContext('2d');
+        
+                // If chart is not already created, create it
+                if (!window.chart) {
+                    window.chart = new Chart(ctx, {
+                        type: 'line',
+                        data: {
+                            labels: reversedTimestamps,
+                            datasets: [
+                                {
+                                    label: 'Temperature (°C)',
+                                    data: reversedTempValues,
+                                    borderColor: 'yellow',
+                                    backgroundColor: 'rgba(255, 165, 0, 0.1)',
+                                    fill: true,
+                                },
+                                {
+                                    label: 'Humidity (%)',
+                                    data: reversedHumidityValues,
+                                    borderColor: 'blue',
+                                    backgroundColor: 'rgba(0, 0, 255, 0.1)',
+                                    fill: true,
+                                },
+                                {
+                                    label: 'Gas Level (PPM)',
+                                    data: reversedGasValues,
+                                    borderColor: 'green',
+                                    backgroundColor: 'rgba(0, 255, 0, 0.1)',
+                                    fill: true,
+                                },
+                            ],
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                zoom: {
+                                    zoom: {
+                                        wheel: { enabled: true },
+                                        pinch: { enabled: true },
+                                        mode: 'x',
+                                    },
+                                    pan: {
+                                        enabled: true,
+                                        mode: 'x',
+                                    },
+                                },
+                            },
+                            scales: {
+                                x: { title: { display: true, text: 'Time' } },
+                                y: { title: { display: true, text: 'Values' } },
+                            },
+                        },
+                    });
+                } else {
+                    // Update chart data for existing chart
+                    window.chart.data.labels = reversedTimestamps;
+                    window.chart.data.datasets[0].data = reversedTempValues;
+                    window.chart.data.datasets[1].data = reversedHumidityValues;
+                    window.chart.data.datasets[2].data = reversedGasValues;
+                    window.chart.update();  // Update the chart with new data
+                }
+        
+                // Menyembunyikan/memunculkan dataset berdasarkan checkbox
+                document.getElementById("showTemperature").addEventListener('change', function () {
+                    window.chart.data.datasets[0].hidden = !this.checked;
+                    window.chart.update();
+                });
+        
+                document.getElementById("showHumidity").addEventListener('change', function () {
+                    window.chart.data.datasets[1].hidden = !this.checked;
+                    window.chart.update();
+                });
+        
+                document.getElementById("showGasLevel").addEventListener('change', function () {
+                    window.chart.data.datasets[2].hidden = !this.checked;
+                    window.chart.update();
+                });
+        
+            } catch (error) {
+                console.error(error);
+            }
+        }
+        
+        // Fetch data on load
+        fetchData();
+        
+        setInterval(fetchData, 5000); // 5000 milliseconds = 5 seconds
+        </script>
+        
+</body>
+</html>
