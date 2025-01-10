@@ -7,7 +7,7 @@ const char* ssid = "SANTAI";
 const char* password = "becakroda4";
 
 // URL server Flask
-const char* serverUrl = "https://186e-180-245-90-159.ngrok-free.app/data";
+const char* serverUrl = "https://rafebyours-flask-esp32.vercel.app/data";
 
 // Konfigurasi sensor DHT
 #define DHTPIN 4
